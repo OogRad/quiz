@@ -81,7 +81,7 @@ let queue = questions.map((_, i) => i);
 let position = 0;
 let retry = false;
 let locked = false;
-const questionSeconds = 15;
+const questionSeconds = 30;
 let timerId = null;
 let countdownId = null;
 let deadline = 0;
@@ -161,7 +161,7 @@ function renderResult(){
 function renderWelcome(){
   stopTimer();clearInterval(countdownId);document.body.dataset.screen="welcome";
   updateStamps('안녕! 나는 퀴즈 친구 큐비야. AI 윤리 퀴즈에 도전해 볼래?');
-  quiz.innerHTML=`<div class="welcome"><span class="category">${versionLabel()} · 10문제 · 문제당 15초</span><div class="ready-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div><h2>준비되셨나요?</h2><p>생활 속 10가지 AI 상황에서 나만의 선택을 해 봐요.<br>정답 스탬프를 모아 나만의 배지를 받아요!</p><div class="welcome-steps"><span>① 선택하기</span><span>② 스탬프 모으기</span><span>③ 배지 받기</span></div><p class="time-rule">문제당 15초! 시간이 끝나면 오답 처리돼요.<br>해설은 시간제한 없이 읽을 수 있어요.</p><button class="primary start" id="start">시작 🚀</button><div><button class="back-button" id="change-version">← 버전 다시 선택</button></div><small>이름 입력 없이 바로 참여할 수 있어요.</small></div>`;
+  quiz.innerHTML=`<div class="welcome"><span class="category">${versionLabel()} · 10문제 · 문제당 30초</span><div class="ready-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div><h2>준비되셨나요?</h2><p>생활 속 10가지 AI 상황에서 나만의 선택을 해 봐요.<br>정답 스탬프를 모아 나만의 배지를 받아요!</p><div class="welcome-steps"><span>① 선택하기</span><span>② 스탬프 모으기</span><span>③ 배지 받기</span></div><p class="time-rule">문제당 30초! 시간이 끝나면 오답 처리돼요.<br>해설은 시간제한 없이 읽을 수 있어요.</p><button class="primary start" id="start">시작 🚀</button><div><button class="back-button" id="change-version">← 버전 다시 선택</button></div><small>이름 입력 없이 바로 참여할 수 있어요.</small></div>`;
   quiz.querySelector('#start').addEventListener('click',beginCountdown);
   quiz.querySelector('#change-version').addEventListener('click',()=>{renderVersionSelection();focusHeading();});
 }
@@ -170,8 +170,9 @@ function renderVersionSelection(){
   answers=Array(10).fill(null);position=0;retry=false;locked=false;
   document.body.dataset.screen='welcome';
   updateStamps('반가워요! 나에게 맞는 AI 윤리 퀴즈를 선택해 주세요.');
-  quiz.innerHTML='<div class="welcome"><span class="category">청원생명축제 · AI 윤리 퀴즈 체험</span><h2>어떤 퀴즈에 도전할까요?</h2><p>학생도, 어른도 함께 즐기는 AI 윤리 챌린지!</p><div class="version-options"><button class="version-card" id="student-version"><span aria-hidden="true">🎒</span><strong>학생 버전</strong><small>초·중등 학생을 위한<br>학교와 친구, 생활 속 AI</small><b>10문제 · 문제당 15초 →</b></button><button class="version-card adult" id="adult-version"><span aria-hidden="true">💼</span><strong>성인 버전</strong><small>성인을 위한<br>업무와 일상 속 AI</small><b>10문제 · 문제당 15초 →</b></button></div><small>70점 이하이면 틀린 문제만 다시 도전할 수 있어요.</small></div>';
+  quiz.innerHTML='<div class="welcome"><span class="category">청원생명축제 · AI 윤리 퀴즈 체험</span><h2>어떤 퀴즈에 도전할까요?</h2><p>학생도, 어른도 함께 즐기는 AI 윤리 챌린지!</p><div class="version-options"><button class="version-card" id="student-version"><span aria-hidden="true">🎒</span><strong>학생 버전</strong><small>초·중등 학생을 위한<br>학교와 친구, 생활 속 AI</small><b>10문제 · 문제당 30초 →</b></button><button class="version-card adult" id="adult-version"><span aria-hidden="true">💼</span><strong>성인 버전</strong><small>성인을 위한<br>업무와 일상 속 AI</small><b>10문제 · 문제당 30초 →</b></button></div><small>70점 이하이면 틀린 문제만 다시 도전할 수 있어요.</small></div>';
   quiz.querySelector('#student-version').addEventListener('click',()=>chooseVersion('student'));
   quiz.querySelector('#adult-version').addEventListener('click',()=>chooseVersion('adult'));
 }
 renderVersionSelection();
+
