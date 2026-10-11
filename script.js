@@ -23,11 +23,30 @@ const adultQuestions = [
   {topic:'설명과 이의 제기',q:'AI 심사 결과를 고객이 이해하지 못하고 이의를 제기합니다.',choices:['판단 기준을 이해할 수 있게 설명하고 사람이 재검토할 경로를 제공한다.','AI 판단은 바꿀 수 없다고만 답한다.','점수만 보여 주고 문의를 막는다.'],answer:0,why:'사람에게 영향을 주는 AI 판단에는 이해할 수 있는 설명과 문제를 제기할 경로가 필요합니다. 한계와 판단 근거도 함께 살펴야 합니다.'},
   {topic:'사람의 최종 검토',q:'AI가 작성한 공지 이메일을 바로 자동 발송하려 합니다. 좋은 선택은?',choices:['문장이 자연스러우면 확인 없이 발송한다.','사람이 사실, 수신 대상과 표현을 확인한 뒤 발송한다.','AI가 작성했다는 말만 넣고 내용은 검토하지 않는다.'],answer:1,why:'자연스러운 문장에도 사실 오류나 부적절한 표현이 있을 수 있습니다. 외부로 전달하기 전에 사람이 내용과 대상을 검토하세요.'}
 ];
+const seniorQuestions = [
+  {topic:'비밀번호 보호',q:'AI에게 은행 비밀번호를 알려줘도 괜찮다.',answer:1,why:'비밀번호는 AI에게도 알려주지 마세요. 내 돈과 정보를 지키는 중요한 열쇠입니다.'},
+  {topic:'정보 확인',q:'AI가 알려준 내용도 틀릴 수 있다.',answer:0,why:'AI도 실수할 수 있습니다. 중요한 내용은 믿을 만한 자료나 담당자에게 확인하세요.'},
+  {topic:'목소리 사칭',q:'가족 목소리로 돈을 보내 달라는 전화가 오면, 원래 알던 번호로 다시 확인한다.',answer:0,why:'AI로 가족의 목소리를 흉내 낼 수 있습니다. 평소 알던 번호로 직접 전화해 확인하세요.'},
+  {topic:'사진과 허락',q:'다른 사람의 사진을 AI로 바꾸기 전에는 그 사람에게 허락을 구한다.',answer:0,why:'사진의 주인이 원하지 않을 수 있습니다. 사진을 AI에 넣거나 바꾸기 전에 먼저 물어보세요.'},
+  {topic:'가짜 영상',q:'인터넷 영상은 모두 실제로 일어난 일을 보여 준다.',answer:1,why:'AI로 진짜처럼 보이는 가짜 영상도 만들 수 있습니다. 확인되지 않은 영상은 함부로 퍼뜨리지 마세요.'},
+  {topic:'주민등록번호 보호',q:'선물을 준다는 AI 채팅창에 주민등록번호를 입력해도 된다.',answer:1,why:'선물을 준다고 해도 주민등록번호를 입력하지 마세요. 개인정보를 노리는 속임수일 수 있습니다.'},
+  {topic:'서로 존중하기',q:'AI로 만든 말이라면 다른 사람을 욕하는 데 써도 괜찮다.',answer:1,why:'AI가 만든 말도 사람에게 상처를 줄 수 있습니다. 다른 사람을 존중하는 말로 사용하세요.'},
+  {topic:'도움 요청',q:'AI 사용 중 수상한 안내가 나오면 가족이나 믿을 만한 사람에게 물어본다.',answer:0,why:'급하게 누르거나 정보를 입력하지 말고, 믿을 만한 사람과 함께 확인하세요.'},
+  {topic:'내가 확인하기',q:'AI가 써 준 메시지는 내용을 읽지 않고 바로 보내도 된다.',answer:1,why:'보내기 전에 직접 읽어 보세요. 틀린 내용이나 상대방에게 불편한 표현이 있을 수 있습니다.'},
+  {topic:'생활의 균형',q:'AI를 이용하더라도 가족과 대화하고 쉬는 시간을 챙긴다.',answer:0,why:'AI는 편리한 도구입니다. 사람들과 어울리고 몸과 마음을 쉬게 하는 시간도 소중합니다.'}
+].map(question=>({...question,choices:['O · 맞아요','X · 아니에요']}));
 let version = 'student';
-let questions = studentQuestions;
-function versionLabel(){return version==='adult'?'성인 버전':'학생 버전';}
+let questions = studentQuestions.slice(0, 5);
+function versionLabel(){return version==='senior'?'시니어 모드':version==='adult'?'성인 버전':'학생 버전';}
 function chooseVersion(selected){
-  version=selected;questions=version==='adult'?adultQuestions:studentQuestions;
+  version=selected;
+  document.body.dataset.version=version;
+  const pool=(version==='senior'?seniorQuestions:version==='adult'?adultQuestions:studentQuestions).map((question,i)=>({...question,scene:scenes[i]}));
+  for(let i=pool.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  questions=pool.slice(0,5);
   answers=Array(questions.length).fill(null);queue=questions.map((_,i)=>i);position=0;retry=false;locked=false;
   renderWelcome();focusHeading();
 }
@@ -64,7 +83,7 @@ function updateStamps(message){
   const count=answers.filter((answer,i)=>answer===questions[i].answer).length;
   const garden=document.querySelector('#garden');
   garden.innerHTML=questions.map((q,i)=>`<span class="seed ${answers[i]===q.answer?'grown':''}" aria-hidden="true">${answers[i]===q.answer?'⭐':'·'}</span>`).join('');
-  garden.setAttribute('aria-label',`10칸 중 ${count}개의 정답 스탬프를 모았습니다`);
+  garden.setAttribute('aria-label',`5칸 중 ${count}개의 정답 스탬프를 모았습니다`);
   document.querySelector('#buddy-message').textContent=message;
 }
 function celebrate(){
@@ -120,8 +139,8 @@ function renderQuestion(moveFocus=false){
   stopTimer();document.body.dataset.screen='playing';
   locked=false;
   const index=queue[position], item=questions[index];
-  updateStamps(retry?'한 번 더 도전! 모은 스탬프는 그대로야.':'삐빅! 정답 스탬프 10개에 도전해 봐!');
-  quiz.innerHTML=`<div class="status"><strong>${retry?'🔄 오답 재도전':'🎯 AI 윤리 퀴즈 · '+versionLabel()}</strong><span>${position+1} / ${queue.length}</span></div><div class="time-row"><span>⏱ 남은 시간</span><strong id="time-left">${questionSeconds}초</strong></div><div class="time-track" id="time-track" role="progressbar" aria-label="남은 제한 시간" aria-valuemin="0" aria-valuemax="${questionSeconds}" aria-valuenow="${questionSeconds}"><div id="time-fill"></div></div><div class="scene" aria-hidden="true">${scenes[index]}</div><span class="category">${item.topic}${retry?` · 원래 ${index+1}번`:''}</span><h2>${item.q}</h2><p class="instruction">나라면 어떻게 할까? 가장 좋은 선택을 눌러 봐요!</p><div class="options">${item.choices.map((choice,i)=>`<button class="option" data-choice="${i}"><span class="letter">${String.fromCharCode(65+i)}</span><span>${choice}</span></button>`).join('')}</div><div id="feedback" aria-live="polite"></div><div class="actions"><small>⭐ 정답 하나에 스탬프 하나 · 10점</small><button class="primary" id="next" disabled>${position===queue.length-1?'내 배지 확인하기 🏅':'다음 문제 →'}</button></div>`;
+  updateStamps(retry?'한 번 더 도전! 모은 스탬프는 그대로야.':'삐빅! 정답 스탬프 5개에 도전해 봐!');
+  quiz.innerHTML=`<div class="status"><strong>${retry?'🔄 오답 재도전':'🎯 AI 윤리 퀴즈 · '+versionLabel()}</strong><span>${position+1} / ${queue.length}</span></div><div class="time-row"><span>⏱ 남은 시간</span><strong id="time-left">${questionSeconds}초</strong></div><div class="time-track" id="time-track" role="progressbar" aria-label="남은 제한 시간" aria-valuemin="0" aria-valuemax="${questionSeconds}" aria-valuenow="${questionSeconds}"><div id="time-fill"></div></div><div class="scene" aria-hidden="true">${item.scene}</div><span class="category">${item.topic}${retry?` · 원래 ${index+1}번`:''}</span><h2>${item.q}</h2><p class="instruction">${version==='senior'?'맞는 말이면 O, 틀린 말이면 X를 눌러 주세요.':'나라면 어떻게 할까? 가장 좋은 선택을 눌러 봐요!'}</p><div class="options ${version==='senior'?'ox-options':''}">${item.choices.map((choice,i)=>`<button class="option" data-choice="${i}"><span class="letter">${version==='senior'?i===0?'O':'X':String.fromCharCode(65+i)}</span><span>${choice}</span></button>`).join('')}</div><div id="feedback" aria-live="polite"></div><div class="actions"><small>⭐ 정답 하나에 스탬프 하나 · 20점</small><button class="primary" id="next" disabled>${position===queue.length-1?'내 배지 확인하기 🏅':'다음 문제 →'}</button></div>`;
   quiz.querySelectorAll('[data-choice]').forEach(button=>button.addEventListener('click',()=>selectAnswer(Number(button.dataset.choice))));
   quiz.querySelector('#next').addEventListener('click',()=>{position++;if(position<queue.length)renderQuestion(true);else renderResult();});
   if(moveFocus)focusHeading();
@@ -139,16 +158,16 @@ function selectAnswer(choice){
   updateStamps(correct?'야호! 정답 스탬프 하나 추가! ⭐':'괜찮아! 해설을 읽고 다시 도전하면 돼! 💪');
   if(correct){quiz.classList.remove('pop');void quiz.offsetWidth;quiz.classList.add('pop');}
   quiz.querySelectorAll('[data-choice]').forEach(button=>{const i=Number(button.dataset.choice);button.disabled=true;if(i===item.answer)button.classList.add('correct');if(i===choice){button.classList.add('selected');if(!correct)button.classList.add('wrong');}});
-  quiz.querySelector('#feedback').innerHTML=`<div class="feedback ${correct?'':'wrong'}"><strong>${correct?'⭐ 정답! 스탬프 획득 +10점':choice===-1?'⏰ 시간 종료! 해설을 읽고 다시 도전해요.':'💪 배움의 힘 충전! 다음엔 할 수 있어요!'}</strong><p>${correct?'':`정답: ${item.choices[item.answer]}<br>`}${item.why}</p></div>`;
+  quiz.querySelector('#feedback').innerHTML=`<div class="feedback ${correct?'':'wrong'}"><strong>${correct?'⭐ 정답! 스탬프 획득 +20점':choice===-1?'⏰ 시간 종료! 해설을 읽고 다시 도전해요.':'💪 배움의 힘 충전! 다음엔 할 수 있어요!'}</strong><p>${correct?'':`정답: ${item.choices[item.answer]}<br>`}${item.why}</p></div>`;
   quiz.querySelector('#next').disabled=false;
 }
 function renderResult(){
   stopTimer();document.body.dataset.screen="result";
   const wrong=questions.map((q,i)=>answers[i]===q.answer?null:i).filter(i=>i!==null);
-  const score=(questions.length-wrong.length)*10;
+  const score=(questions.length-wrong.length)*20;
   const needsRetry=score<=70;
   updateStamps(needsRetry?'조금만 더! 틀린 문제를 다시 풀고 스탬프를 모아 보자.':'퀴즈 성공! AI를 바르게 쓰는 멋진 선택이었어!');
-  quiz.innerHTML=`<div class="result"><span class="category">${versionLabel()} · ${retry?'재도전 결과':'퀴즈 완료'}</span><div class="result-icon" aria-hidden="true">${needsRetry?'🌱':'🎉'}</div><h2>${needsRetry?'조금 더 배우면 할 수 있어요!':'멋져요! AI 윤리 탐험 성공!'}</h2><div class="score">${score}<small> / 100점</small></div><p>10문제 중 <strong>${10-wrong.length}문제</strong>를 맞혔어요.<br>${needsRetry?`70점 이하라면 틀린 문제에 재도전해요.<br>맞힌 문제는 유지하고, ${wrong.length}문제만 다시 풀어요.`:'배운 내용을 일상에서도 실천해 봐요.'}</p><div class="result-buttons">${needsRetry?'<button class="primary" id="retry">틀린 문제 다시 풀기 →</button>':''}<button class="${needsRetry?'secondary':'primary'}" id="restart">처음부터 다시 풀기</button></div>${wrong.length?`<div class="review"><h3>틀린 문제 돌아보기 · ${wrong.length}문제</h3>${wrong.map(i=>`<details><summary>${i+1}. ${questions[i].topic}</summary><p>${questions[i].q}</p><p>내 답: ${answers[i]===-1?'시간 초과 (미응답)':questions[i].choices[answers[i]]}<br><strong>정답: ${questions[i].choices[questions[i].answer]}</strong></p><p>${questions[i].why}</p></details>`).join('')}</div>`:''}</div>`;
+  quiz.innerHTML=`<div class="result"><span class="category">${versionLabel()} · ${retry?'재도전 결과':'퀴즈 완료'}</span><div class="result-icon" aria-hidden="true">${needsRetry?'🌱':'🎉'}</div><h2>${needsRetry?'조금 더 배우면 할 수 있어요!':'멋져요! AI 윤리 탐험 성공!'}</h2><div class="score">${score}<small> / 100점</small></div><p>5문제 중 <strong>${questions.length-wrong.length}문제</strong>를 맞혔어요.<br>${needsRetry?`70점 이하라면 틀린 문제에 재도전해요.<br>맞힌 문제는 유지하고, ${wrong.length}문제만 다시 풀어요.`:'배운 내용을 일상에서도 실천해 봐요.'}</p><div class="result-buttons">${needsRetry?'<button class="primary" id="retry">틀린 문제 다시 풀기 →</button>':''}<button class="${needsRetry?'secondary':'primary'}" id="restart">처음부터 다시 풀기</button></div>${wrong.length?`<div class="review"><h3>틀린 문제 돌아보기 · ${wrong.length}문제</h3>${wrong.map(i=>`<details><summary>${i+1}. ${questions[i].topic}</summary><p>${questions[i].q}</p><p>내 답: ${answers[i]===-1?'시간 초과 (미응답)':questions[i].choices[answers[i]]}<br><strong>정답: ${questions[i].choices[questions[i].answer]}</strong></p><p>${questions[i].why}</p></details>`).join('')}</div>`:''}</div>`;
   if(needsRetry)quiz.querySelector('#retry').addEventListener('click',()=>{queue=wrong;position=0;retry=true;beginCountdown();});
   const badge=document.createElement('div');badge.className='badge';
   badge.innerHTML=`<span>${score===100?'🏆':needsRetry?'🚀':'🏅'}</span><strong>${score===100?'AI 윤리 퀴즈 마스터':needsRetry?'도전하는 AI 탐험가':'멋진 AI 윤리 챔피언'}</strong><small>청원생명축제 · AI 윤리 퀴즈 체험</small>`;
@@ -161,18 +180,21 @@ function renderResult(){
 function renderWelcome(){
   stopTimer();clearInterval(countdownId);document.body.dataset.screen="welcome";
   updateStamps('안녕! 나는 퀴즈 친구 큐비야. AI 윤리 퀴즈에 도전해 볼래?');
-  quiz.innerHTML=`<div class="welcome"><span class="category">${versionLabel()} · 10문제 · 문제당 30초</span><div class="ready-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div><h2>준비되셨나요?</h2><p>생활 속 10가지 AI 상황에서 나만의 선택을 해 봐요.<br>정답 스탬프를 모아 나만의 배지를 받아요!</p><div class="welcome-steps"><span>① 선택하기</span><span>② 스탬프 모으기</span><span>③ 배지 받기</span></div><p class="time-rule">문제당 30초! 시간이 끝나면 오답 처리돼요.<br>해설은 시간제한 없이 읽을 수 있어요.</p><button class="primary start" id="start">시작 🚀</button><div><button class="back-button" id="change-version">← 버전 다시 선택</button></div><small>이름 입력 없이 바로 참여할 수 있어요.</small></div>`;
+  quiz.innerHTML=`<div class="welcome"><span class="category">${versionLabel()} · 랜덤 5문제 · 문제당 30초</span><div class="ready-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div><h2>준비되셨나요?</h2><p>10문제 중 무작위로 뽑은 5가지 AI 상황에서 나만의 선택을 해 봐요.<br>정답 스탬프를 모아 나만의 배지를 받아요!</p><div class="welcome-steps"><span>① 선택하기</span><span>② 스탬프 모으기</span><span>③ 배지 받기</span></div><p class="time-rule">문제당 30초! 시간이 끝나면 오답 처리돼요.<br>해설은 시간제한 없이 읽을 수 있어요.</p><button class="primary start" id="start">시작 🚀</button><div><button class="back-button" id="change-version">← 버전 다시 선택</button></div><small>이름 입력 없이 바로 참여할 수 있어요.</small></div>`;
   quiz.querySelector('#start').addEventListener('click',beginCountdown);
   quiz.querySelector('#change-version').addEventListener('click',()=>{renderVersionSelection();focusHeading();});
 }
 function renderVersionSelection(){
   stopTimer();clearInterval(countdownId);countdownId=null;
-  answers=Array(10).fill(null);position=0;retry=false;locked=false;
-  document.body.dataset.screen='welcome';
+  answers=Array(questions.length).fill(null);position=0;retry=false;locked=false;
+  document.body.dataset.screen='welcome';document.body.dataset.version='';
   updateStamps('반가워요! 나에게 맞는 AI 윤리 퀴즈를 선택해 주세요.');
-  quiz.innerHTML='<div class="welcome"><span class="category">청원생명축제 · AI 윤리 퀴즈 체험</span><h2>어떤 퀴즈에 도전할까요?</h2><p>학생도, 어른도 함께 즐기는 AI 윤리 챌린지!</p><div class="version-options"><button class="version-card" id="student-version"><span aria-hidden="true">🎒</span><strong>학생 버전</strong><small>초·중등 학생을 위한<br>학교와 친구, 생활 속 AI</small><b>10문제 · 문제당 30초 →</b></button><button class="version-card adult" id="adult-version"><span aria-hidden="true">💼</span><strong>성인 버전</strong><small>성인을 위한<br>업무와 일상 속 AI</small><b>10문제 · 문제당 30초 →</b></button></div><small>70점 이하이면 틀린 문제만 다시 도전할 수 있어요.</small></div>';
+  quiz.innerHTML='<div class="welcome"><span class="category">청원생명축제 · AI 윤리 퀴즈 체험</span><h2>어떤 퀴즈에 도전할까요?</h2><p>학생부터 시니어까지 함께 즐기는 AI 윤리 챌린지!</p><div class="version-options"><button class="version-card" id="student-version"><span aria-hidden="true">🎒</span><strong>학생 버전</strong><small>초·중등 학생을 위한<br>학교와 친구, 생활 속 AI</small><b>랜덤 5문제 · 문제당 30초 →</b></button><button class="version-card adult" id="adult-version"><span aria-hidden="true">💼</span><strong>성인 버전</strong><small>성인을 위한<br>업무와 일상 속 AI</small><b>랜덤 5문제 · 문제당 30초 →</b></button><button class="version-card senior" id="senior-version"><span aria-hidden="true">😊</span><strong>시니어 모드</strong><small>쉬운 생활 속 AI 이야기<br>큰 버튼으로 푸는 O·X 퀴즈</small><b>랜덤 5문제 · 문제당 30초 →</b></button></div><small>70점 이하이면 틀린 문제만 다시 도전할 수 있어요.</small></div>';
   quiz.querySelector('#student-version').addEventListener('click',()=>chooseVersion('student'));
   quiz.querySelector('#adult-version').addEventListener('click',()=>chooseVersion('adult'));
+  quiz.querySelector('#senior-version').addEventListener('click',()=>chooseVersion('senior'));
 }
 renderVersionSelection();
+
+
 
